@@ -69,15 +69,12 @@ async fn tunnel(req: Request, mut cx: RouteContext<Config>) -> Result<Response> 
         }
         let kv_index = (rand_buf[0] as usize) % kvid_list.len();
         proxyip = kvid_list[kv_index].clone();
-        match proxy_kv.get(&proxyip) {
-            Some(l) if !l.is_empty() => {
-                let proxyip_index = (rand_buf[0] as usize) % l.len();
-                proxyip = l[proxyip_index].clone().replace(':', "-");
-            }
-            _ => {
-                // proxyip tidak ada di KV (atau kosong) — pakai apa adanya, tanpa panic.
-                proxyip = proxyip.replace(':', "-");
-            }
+        if let Some(list) = proxy_kv.get(&proxyip).filter(|l| !l.is_empty()) {
+            let proxyip_index = (rand_buf[0] as usize) % list.len();
+            proxyip = list[proxyip_index].clone().replace(':', "-");
+        } else {
+            // proxyip tidak ada di KV (atau kosong) — pakai apa adanya, tanpa panic.
+            proxyip = proxyip.replace(':', "-");
         }
     }
 
