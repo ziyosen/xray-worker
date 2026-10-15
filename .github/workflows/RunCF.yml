@@ -17,6 +17,10 @@ jobs:
     environment: cf
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Rust (pinned)
+        uses: dtolnay/rust-toolchain@1.84.0
+        with:
+          targets: wasm32-unknown-unknown
       - name: deploy
         uses: cloudflare/wrangler-action@v3
         with:
