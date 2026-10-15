@@ -22,6 +22,8 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - name: deploy
+        env:
+          RUSTFLAGS: "-C symbol-mangling-version=legacy -Zunstable-options"
         uses: cloudflare/wrangler-action@v3
         with:
             apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
