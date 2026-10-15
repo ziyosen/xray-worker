@@ -4,12 +4,12 @@ compatibility_date = "2024-05-23"
 minify = true
 
 
-account_id = "ea1aab81dc8e22018131832d124a54fc"
+account_id = "c94c08c1fa3eb249700c89571fc3a332"
 workers_dev = true
 
 [[kv_namespaces]]
 binding = "YUMI"
-id = "8ff1913fa986482d967e0a5c7e2b0791"
+id = "4bf5f900d3034fd3ba03ee4c23aa2f8d"
 
 [build]
 command = "cargo install worker-build@0.8.6 && worker-build --release"
