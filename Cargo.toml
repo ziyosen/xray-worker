@@ -15,10 +15,10 @@ tokio = { version = "1.28", features = ["io-util", "rt"] }
 serde_json = "1.0"
 base64 = "0.22"
 getrandom = { version = "0.2", features = ["js"] }
-worker = "=0.8.6"
-worker-sys = "=0.8.6"
-worker-macros = "=0.8.6"
-uuid = { version = "=1.24.1", features = ["v4", "js"] }
+worker = "0.8.3"
+worker-sys = "0.8.3"
+worker-macros = "0.8.3"
+uuid = { version = "1.8.0", features = ["v4", "js"] }
 futures-util = "0.3.28"
 pin-project-lite = "0.2"
 bytes = "1.4.0"
