@@ -12,7 +12,11 @@ impl <'a> ProxyStream<'a> {
         // read uuid
         let mut user_id = [0u8; 16];
         self.read_exact(&mut user_id).await?;
-        let _uuid = Uuid::from_bytes(user_id);
+        let req_uuid = Uuid::from_bytes(user_id);
+        // Validasi UUID: kalau env UUID ter-set (bukan zero), wajib cocok — bukan panic.
+        if self.config.uuid != Uuid::nil() && req_uuid != self.config.uuid {
+            return Err(Error::RustError("vless: uuid tidak valid".to_string()));
+        }
         
         // read protobuf
         let m_len = self.read_u8().await?;

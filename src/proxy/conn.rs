@@ -68,7 +68,9 @@ impl<'a> ProxyStream<'a> {
         self.fill_buffer_until(peek_buffer_len).await?;
         let peeked_buffer = self.peek_buffer(peek_buffer_len);
 
-        if peeked_buffer.len() < (peek_buffer_len/2) {
+        // Guard ketat: semua sniffer mengindeks sampai byte 57 — kalau kurang, tolak rapi
+        // (bukan panic → mencegah 1101).
+        if peeked_buffer.len() < 58 {
             return Err(Error::RustError("not enough buffer".to_string()));
         }
 
@@ -131,8 +133,11 @@ impl<'a> ProxyStream<'a> {
         buffer.len() > 57 && buffer[56] == 13 && buffer[57] == 10
     }
 
-    fn is_vmess(&self, buffer: &[u8]) -> bool {
-        buffer.len() > 0 // fallback
+    // vmess TIDAK bisa di-sniff dari byte pertama dengan andal —
+    // fallback "selalu true" bikin garbage masuk parser vmess dan panic (sumber 1101).
+    // Sniffer hanya terima vless/trojan/ss; selain itu ditolak rapi.
+    fn is_vmess(&self, _buffer: &[u8]) -> bool {
+        false
     }
 
     pub async fn handle_tcp_outbound(&mut self, addr: String, port: u16) -> Result<()> {
