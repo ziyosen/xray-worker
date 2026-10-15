@@ -48,7 +48,7 @@ async fn tunnel(req: Request, mut cx: RouteContext<Config>) -> Result<Response> 
         let kv = cx.kv("YUMI")?;
         let mut proxy_kv_str = kv.get("proxy_kv").text().await?.unwrap_or_default();
         let mut rand_buf = [0u8; 1];
-        getrandom::getrandom(&mut rand_buf).expect("failed generating random number");
+        getrandom::getrandom(&mut rand_buf).map_err(|e| Error::from(format!("failed generating random number: {}", e)))?;
 
         if proxy_kv_str.is_empty() {
             console_log!("getting proxy kv from github...");
@@ -64,10 +64,23 @@ async fn tunnel(req: Request, mut cx: RouteContext<Config>) -> Result<Response> 
         }
 
         let proxy_kv: HashMap<String, Vec<String>> = serde_json::from_str(&proxy_kv_str)?;
+        if kvid_list.is_empty() {
+            return Err(Error::from("kvid list kosong"));
+        }
         let kv_index = (rand_buf[0] as usize) % kvid_list.len();
         proxyip = kvid_list[kv_index].clone();
-        let proxyip_index = (rand_buf[0] as usize) % proxy_kv[&proxyip].len();
-        proxyip = proxy_kv[&proxyip][proxyip_index].clone().replace(':', "-");
+        let proxy_list = match proxy_kv.get(&proxyip) {
+            Some(l) if !l.is_empty() => l,
+            _ => {
+                // proxyip dari KV tidak dikenal — pakai apa adanya (bukan panic).
+                proxyip = proxyip.replace(':', "-");
+            }
+        };
+        if proxy_kv.get(&proxyip).is_some() {
+            let proxy_list = &proxy_kv[&proxyip];
+            let proxyip_index = (rand_buf[0] as usize) % proxy_list.len();
+            proxyip = proxy_list[proxyip_index].clone().replace(':', "-");
+        }
     }
 
     let upgrade = req.headers().get("Upgrade")?.unwrap_or_default();
@@ -83,7 +96,13 @@ async fn tunnel(req: Request, mut cx: RouteContext<Config>) -> Result<Response> 
         server.accept()?;
 
         wasm_bindgen_futures::spawn_local(async move {
-            let events = server.events().unwrap();
+            let events = match server.events() {
+                Ok(ev) => ev,
+                Err(e) => {
+                    console_error!("[tunnel]: events() gagal: {}", e);
+                    return;
+                }
+            };
             if let Err(e) = ProxyStream::new(cx.data, &server, events).process().await {
                 console_error!("[tunnel]: {}", e);
             }
