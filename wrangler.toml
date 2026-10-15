@@ -1,7 +1,7 @@
 name = "xray"
 main = "build/worker/shim.mjs"
 compatibility_date = "2024-05-23"
-minify = true
+minify = false
 
 
 account_id = "c94c08c1fa3eb249700c89571fc3a332"
